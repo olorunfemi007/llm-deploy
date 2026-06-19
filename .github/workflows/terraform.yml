@@ -60,6 +60,7 @@ jobs:
           terraform plan \
             -var="project_id=${{ env.GCP_PROJECT_ID }}" \
             -var="state_bucket=${{ env.TF_STATE_BUCKET }}" \
+            -var="service_account_email=llm-deploy-sa@llm-deploy-499913.iam.gserviceaccount.com" \
             -no-color \
             -out=tfplan
         continue-on-error: true
@@ -117,4 +118,5 @@ jobs:
         run: |
           terraform apply -auto-approve \
             -var="project_id=${{ env.GCP_PROJECT_ID }}" \
-            -var="state_bucket=${{ env.TF_STATE_BUCKET }}"
+            -var="state_bucket=${{ env.TF_STATE_BUCKET }}" \
+            -var="service_account_email=llm-deploy-sa@llm-deploy-499913.iam.gserviceaccount.com"
