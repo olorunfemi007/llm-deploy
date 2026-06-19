@@ -1,0 +1,7 @@
+project_id          = "my-gcp-project-id"
+region              = "us-central1"
+zone                = "us-central1-a"
+machine_type        = "e2-small"
+ssh_user            = "ubuntu"
+ssh_public_key_path = "~/.ssh/id_rsa.pub"
+state_bucket        = "my-terraform-state-bucket"
