@@ -20,18 +20,18 @@ output "worker_internal_ips" {
 
 output "ssh_control_plane" {
   description = "SSH command for the control-plane node"
-  value       = "ssh ${var.ssh_user}@${google_compute_instance.control_plane.network_interface[0].access_config[0].nat_ip}"
+  value       = "gcloud compute ssh k8s-control-plane --zone ${var.zone}"
 }
 
 output "ssh_workers" {
   description = "SSH commands for the worker nodes"
-  value       = [for w in google_compute_instance.worker : "ssh ${var.ssh_user}@${w.network_interface[0].access_config[0].nat_ip}"]
+  value       = [for i in range(2) : "gcloud compute ssh k8s-worker-${i + 1} --zone ${var.zone}"]
 }
 
 output "post_deploy_instructions" {
   description = "Steps to complete the cluster setup"
   value       = <<-EOT
-    1. SSH into the control-plane: ssh ${var.ssh_user}@<control-plane-ip>
+    1. SSH into the control-plane: gcloud compute ssh k8s-control-plane --zone ${var.zone}
     2. Wait for setup: sudo cloud-init status --wait
     3. Get the join command: sudo cat /root/kubeadm-join-command.sh
     4. SSH into each worker and run the join command as root

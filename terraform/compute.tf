@@ -30,7 +30,7 @@ resource "google_compute_instance" "control_plane" {
   }
 
   metadata = {
-    ssh-keys = "${var.ssh_user}:${file(var.ssh_public_key_path)}"
+    enable-oslogin = "TRUE"
   }
 
   metadata_startup_script = join("\n", [
@@ -41,6 +41,7 @@ resource "google_compute_instance" "control_plane" {
   ])
 
   service_account {
+    email  = var.service_account_email
     scopes = ["cloud-platform"]
   }
 
@@ -72,12 +73,13 @@ resource "google_compute_instance" "worker" {
   }
 
   metadata = {
-    ssh-keys = "${var.ssh_user}:${file(var.ssh_public_key_path)}"
+    enable-oslogin = "TRUE"
   }
 
   metadata_startup_script = file("${path.module}/scripts/common.sh")
 
   service_account {
+    email  = var.service_account_email
     scopes = ["cloud-platform"]
   }
 

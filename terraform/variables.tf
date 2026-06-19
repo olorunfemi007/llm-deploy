@@ -27,16 +27,9 @@ variable "os_image" {
   default     = "ubuntu-os-cloud/ubuntu-2204-lts"
 }
 
-variable "ssh_user" {
-  description = "SSH username for VM access"
+variable "service_account_email" {
+  description = "Service account email for the VMs"
   type        = string
-  default     = "ubuntu"
-}
-
-variable "ssh_public_key_path" {
-  description = "Path to SSH public key file"
-  type        = string
-  default     = "~/.ssh/id_rsa.pub"
 }
 
 variable "state_bucket" {
