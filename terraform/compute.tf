@@ -37,6 +37,7 @@ resource "google_compute_instance" "control_plane" {
     file("${path.module}/scripts/common.sh"),
     templatefile("${path.module}/scripts/control-plane.sh", {
       control_plane_ip = "10.0.0.10"
+      state_bucket     = var.state_bucket
     })
   ])
 
@@ -76,7 +77,12 @@ resource "google_compute_instance" "worker" {
     enable-oslogin = "TRUE"
   }
 
-  metadata_startup_script = file("${path.module}/scripts/common.sh")
+  metadata_startup_script = join("\n", [
+    file("${path.module}/scripts/common.sh"),
+    templatefile("${path.module}/scripts/worker.sh", {
+      state_bucket = var.state_bucket
+    })
+  ])
 
   service_account {
     email  = var.service_account_email
