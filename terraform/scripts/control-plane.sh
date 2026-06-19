@@ -10,6 +10,7 @@ mkdir -p /root/.kube
 cp /etc/kubernetes/admin.conf /root/.kube/config
 chown root:root /root/.kube/config
 
+
 kubectl --kubeconfig=/root/.kube/config apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
 
 JOIN_CMD=$(kubeadm token create --print-join-command)
