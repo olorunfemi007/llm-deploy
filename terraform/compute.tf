@@ -83,3 +83,5 @@ resource "google_compute_instance" "worker" {
 
   allow_stopping_for_update = true
 }
+
+
