@@ -55,3 +55,16 @@ resource "google_compute_firewall" "k8s_allow_api" {
   source_ranges = ["0.0.0.0/0"]
   target_tags   = ["k8s-control-plane"]
 }
+
+resource "google_compute_firewall" "k8s_allow_nodeport" {
+    name    = "k8s-allow-nodeport"
+    network = google_compute_network.k8s_vpc.name
+
+    allow {
+      protocol = "tcp"
+      ports    = ["30080"]
+    }
+
+    source_ranges = ["0.0.0.0/0"]
+    target_tags   = ["k8s-node"]
+  }
