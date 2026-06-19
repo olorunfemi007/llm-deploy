@@ -1,6 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
+gsutil rm gs://${state_bucket}/k8s/join-command.sh 2>/dev/null || true
+
 apt-get install -y nfs-kernel-server
 
 mkdir -p /srv/nfs/k8s
