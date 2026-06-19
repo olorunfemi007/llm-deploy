@@ -17,7 +17,7 @@ resource "google_compute_instance" "control_plane" {
   boot_disk {
     initialize_params {
       image = var.os_image
-      size  = 30
+      size  = 50
       type  = "pd-standard"
     }
   }
@@ -62,7 +62,7 @@ resource "google_compute_instance" "worker" {
   boot_disk {
     initialize_params {
       image = var.os_image
-      size  = 30
+      size  = 20
       type  = "pd-standard"
     }
   }
