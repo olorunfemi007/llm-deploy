@@ -57,14 +57,36 @@ resource "google_compute_firewall" "k8s_allow_api" {
 }
 
 resource "google_compute_firewall" "k8s_allow_nodeport" {
-    name    = "k8s-allow-nodeport"
-    network = google_compute_network.k8s_vpc.name
+  name    = "k8s-allow-nodeport"
+  network = google_compute_network.k8s_vpc.name
 
-    allow {
-      protocol = "tcp"
-      ports    = ["30552"]
-    }
-
-    source_ranges = ["35.191.0.0/16", "209.85.152.0/22", "209.85.204.0/22"]
-    target_tags   = ["k8s-node"]
+  allow {
+    protocol = "tcp"
+    ports    = ["30552"]
   }
+
+  source_ranges = ["35.191.0.0/16", "209.85.152.0/22", "209.85.204.0/22"]
+  target_tags   = ["k8s-node"]
+}
+
+resource "google_compute_subnetwork" "proxy_only" {
+  name          = "llm-proxy-subnet"
+  ip_cidr_range = "10.1.0.0/24"
+  region        = var.region
+  network       = google_compute_network.k8s_vpc.id
+  purpose       = "REGIONAL_MANAGED_PROXY"
+  role          = "ACTIVE"
+}
+
+resource "google_compute_firewall" "k8s_allow_proxy" {
+  name    = "k8s-allow-proxy"
+  network = google_compute_network.k8s_vpc.name
+
+  allow {
+    protocol = "tcp"
+    ports    = ["30552"]
+  }
+
+  source_ranges = ["10.1.0.0/24"]
+  target_tags   = ["k8s-node"]
+}
