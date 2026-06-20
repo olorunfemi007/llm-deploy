@@ -45,8 +45,28 @@ resource "google_compute_url_map" "llm_url_map" {
   default_service = google_compute_backend_service.llm_backend.id
 }
 
+# --- HTTP-only (when TLS is disabled) ---
+
+resource "google_compute_target_http_proxy" "llm_http_direct" {
+  count   = var.enable_tls ? 0 : 1
+  name    = "llm-http-proxy"
+  url_map = google_compute_url_map.llm_url_map.id
+}
+
+resource "google_compute_global_forwarding_rule" "llm_http_direct" {
+  count                 = var.enable_tls ? 0 : 1
+  name                  = "llm-forwarding-http"
+  ip_address            = google_compute_global_address.llm_lb_ip.address
+  port_range            = "80"
+  target                = google_compute_target_http_proxy.llm_http_direct[0].id
+  load_balancing_scheme = "EXTERNAL"
+}
+
+# --- HTTPS + redirect (when TLS is enabled) ---
+
 resource "google_compute_managed_ssl_certificate" "llm_cert" {
-  name = "llm-cert"
+  count = var.enable_tls ? 1 : 0
+  name  = "llm-cert"
 
   managed {
     domains = [var.domain]
@@ -54,21 +74,24 @@ resource "google_compute_managed_ssl_certificate" "llm_cert" {
 }
 
 resource "google_compute_target_https_proxy" "llm_https_proxy" {
+  count            = var.enable_tls ? 1 : 0
   name             = "llm-https-proxy"
   url_map          = google_compute_url_map.llm_url_map.id
-  ssl_certificates = [google_compute_managed_ssl_certificate.llm_cert.id]
+  ssl_certificates = [google_compute_managed_ssl_certificate.llm_cert[0].id]
 }
 
 resource "google_compute_global_forwarding_rule" "llm_https" {
+  count                 = var.enable_tls ? 1 : 0
   name                  = "llm-forwarding-https"
   ip_address            = google_compute_global_address.llm_lb_ip.address
   port_range            = "443"
-  target                = google_compute_target_https_proxy.llm_https_proxy.id
+  target                = google_compute_target_https_proxy.llm_https_proxy[0].id
   load_balancing_scheme = "EXTERNAL"
 }
 
 resource "google_compute_url_map" "llm_redirect" {
-  name = "llm-http-redirect"
+  count = var.enable_tls ? 1 : 0
+  name  = "llm-http-redirect"
 
   default_url_redirect {
     https_redirect = true
@@ -76,15 +99,17 @@ resource "google_compute_url_map" "llm_redirect" {
   }
 }
 
-resource "google_compute_target_http_proxy" "llm_http_proxy" {
+resource "google_compute_target_http_proxy" "llm_http_redirect" {
+  count   = var.enable_tls ? 1 : 0
   name    = "llm-http-redirect-proxy"
-  url_map = google_compute_url_map.llm_redirect.id
+  url_map = google_compute_url_map.llm_redirect[0].id
 }
 
-resource "google_compute_global_forwarding_rule" "llm_http" {
+resource "google_compute_global_forwarding_rule" "llm_http_redirect" {
+  count                 = var.enable_tls ? 1 : 0
   name                  = "llm-forwarding-http"
   ip_address            = google_compute_global_address.llm_lb_ip.address
   port_range            = "80"
-  target                = google_compute_target_http_proxy.llm_http_proxy.id
+  target                = google_compute_target_http_proxy.llm_http_redirect[0].id
   load_balancing_scheme = "EXTERNAL"
 }

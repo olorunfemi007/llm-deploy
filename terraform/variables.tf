@@ -41,3 +41,9 @@ variable "domain" {
   description = "Domain name for the LLM service (e.g. llm.example.com)"
   type        = string
 }
+
+variable "enable_tls" {
+  description = "Enable HTTPS with Google-managed certificate (requires DNS pointed to LB IP)"
+  type        = bool
+  default     = false
+}

@@ -35,12 +35,12 @@ output "llm_lb_ip" {
 
 output "llm_endpoint" {
   description = "LLM API endpoint URL"
-  value       = "https://${var.domain}"
+  value       = var.enable_tls ? "https://${var.domain}" : "http://${google_compute_global_address.llm_lb_ip.address}"
 }
 
 output "dns_record" {
   description = "DNS A record to create for your domain"
-  value       = "${var.domain} → ${google_compute_global_address.llm_lb_ip.address}"
+  value       = var.enable_tls ? "${var.domain} → ${google_compute_global_address.llm_lb_ip.address}" : "TLS disabled — point DNS when ready and set enable_tls=true"
 }
 
 output "post_deploy_instructions" {
