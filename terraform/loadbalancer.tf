@@ -16,8 +16,9 @@ resource "google_compute_instance_group" "llm_workers" {
   }
 }
 
-resource "google_compute_health_check" "llm_health" {
+resource "google_compute_region_health_check" "llm_health" {
   name               = "llm-health-check"
+  region             = var.region
   check_interval_sec = 10
   timeout_sec        = 5
 
@@ -32,7 +33,7 @@ resource "google_compute_region_backend_service" "llm_backend" {
   region                = var.region
   protocol              = "TCP"
   load_balancing_scheme = "EXTERNAL"
-  health_checks         = [google_compute_health_check.llm_health.id]
+  health_checks         = [google_compute_region_health_check.llm_health.id]
 
   backend {
     group          = google_compute_instance_group.llm_workers.self_link
