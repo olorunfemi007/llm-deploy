@@ -31,14 +31,27 @@ resource "google_compute_region_health_check" "llm_health" {
 resource "google_compute_region_backend_service" "llm_backend" {
   name                  = "llm-backend-service"
   region                = var.region
-  protocol              = "TCP"
-  load_balancing_scheme = "EXTERNAL"
+  protocol              = "HTTP"
+  load_balancing_scheme = "EXTERNAL_MANAGED"
   health_checks         = [google_compute_region_health_check.llm_health.id]
 
   backend {
-    group          = google_compute_instance_group.llm_workers.self_link
-    balancing_mode = "CONNECTION"
+    group           = google_compute_instance_group.llm_workers.self_link
+    balancing_mode  = "UTILIZATION"
+    capacity_scaler = 1.0
   }
+}
+
+resource "google_compute_region_url_map" "llm_url_map" {
+  name            = "llm-url-map"
+  region          = var.region
+  default_service = google_compute_region_backend_service.llm_backend.id
+}
+
+resource "google_compute_region_target_http_proxy" "llm_proxy" {
+  name    = "llm-http-proxy"
+  region  = var.region
+  url_map = google_compute_region_url_map.llm_url_map.id
 }
 
 resource "google_compute_forwarding_rule" "llm_http" {
@@ -46,6 +59,7 @@ resource "google_compute_forwarding_rule" "llm_http" {
   region                = var.region
   ip_address            = google_compute_address.llm_lb_ip.address
   port_range            = "80"
-  backend_service       = google_compute_region_backend_service.llm_backend.id
-  load_balancing_scheme = "EXTERNAL"
+  target                = google_compute_region_target_http_proxy.llm_proxy.id
+  load_balancing_scheme = "EXTERNAL_MANAGED"
+  network_tier          = "STANDARD"
 }
