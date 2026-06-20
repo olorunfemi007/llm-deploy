@@ -75,6 +75,7 @@ jobs:
             -var="project_id=${{ env.GCP_PROJECT_ID }}" \
             -var="state_bucket=${{ env.TF_STATE_BUCKET }}" \
             -var="service_account_email=llm-deploy-sa@llm-deploy-499913.iam.gserviceaccount.com" \
+            -var="domain=${{ secrets.DOMAIN }}" \
             -no-color \
             -out=tfplan
         continue-on-error: true
@@ -135,7 +136,8 @@ jobs:
           terraform apply -auto-approve \
             -var="project_id=${{ env.GCP_PROJECT_ID }}" \
             -var="state_bucket=${{ env.TF_STATE_BUCKET }}" \
-            -var="service_account_email=llm-deploy-sa@llm-deploy-499913.iam.gserviceaccount.com"
+            -var="service_account_email=llm-deploy-sa@llm-deploy-499913.iam.gserviceaccount.com" \
+            -var="domain=${{ secrets.DOMAIN }}"
 
   terraform-destroy:
     name: Terraform Destroy
@@ -170,7 +172,8 @@ jobs:
           terraform destroy -auto-approve \
             -var="project_id=${{ env.GCP_PROJECT_ID }}" \
             -var="state_bucket=${{ env.TF_STATE_BUCKET }}" \
-            -var="service_account_email=llm-deploy-sa@llm-deploy-499913.iam.gserviceaccount.com"
+            -var="service_account_email=llm-deploy-sa@llm-deploy-499913.iam.gserviceaccount.com" \
+            -var="domain=${{ secrets.DOMAIN }}"
 
       - name: Clean up join command
         run: gcloud storage rm gs://${{ env.TF_STATE_BUCKET }}/k8s/join-command.sh --quiet || true

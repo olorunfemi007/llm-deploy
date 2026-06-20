@@ -1,6 +1,5 @@
-resource "google_compute_address" "llm_lb_ip" {
-  name   = "llm-lb-ip"
-  region = var.region
+resource "google_compute_global_address" "llm_lb_ip" {
+  name = "llm-lb-ip"
 }
 
 resource "google_compute_instance_group" "llm_workers" {
@@ -16,9 +15,8 @@ resource "google_compute_instance_group" "llm_workers" {
   }
 }
 
-resource "google_compute_region_health_check" "llm_health" {
+resource "google_compute_health_check" "llm_health" {
   name               = "llm-health-check"
-  region             = var.region
   check_interval_sec = 10
   timeout_sec        = 5
 
@@ -28,12 +26,12 @@ resource "google_compute_region_health_check" "llm_health" {
   }
 }
 
-resource "google_compute_region_backend_service" "llm_backend" {
+resource "google_compute_backend_service" "llm_backend" {
   name                  = "llm-backend-service"
-  region                = var.region
   protocol              = "HTTP"
-  load_balancing_scheme = "EXTERNAL_MANAGED"
-  health_checks         = [google_compute_region_health_check.llm_health.id]
+  port_name             = "http"
+  load_balancing_scheme = "EXTERNAL"
+  health_checks         = [google_compute_health_check.llm_health.id]
 
   backend {
     group           = google_compute_instance_group.llm_workers.self_link
@@ -42,26 +40,51 @@ resource "google_compute_region_backend_service" "llm_backend" {
   }
 }
 
-resource "google_compute_region_url_map" "llm_url_map" {
+resource "google_compute_url_map" "llm_url_map" {
   name            = "llm-url-map"
-  region          = var.region
-  default_service = google_compute_region_backend_service.llm_backend.id
+  default_service = google_compute_backend_service.llm_backend.id
 }
 
-resource "google_compute_region_target_http_proxy" "llm_proxy" {
-  name    = "llm-http-proxy"
-  region  = var.region
-  url_map = google_compute_region_url_map.llm_url_map.id
+resource "google_compute_managed_ssl_certificate" "llm_cert" {
+  name = "llm-cert"
+
+  managed {
+    domains = [var.domain]
+  }
 }
 
-resource "google_compute_forwarding_rule" "llm_http" {
+resource "google_compute_target_https_proxy" "llm_https_proxy" {
+  name             = "llm-https-proxy"
+  url_map          = google_compute_url_map.llm_url_map.id
+  ssl_certificates = [google_compute_managed_ssl_certificate.llm_cert.id]
+}
+
+resource "google_compute_global_forwarding_rule" "llm_https" {
+  name                  = "llm-forwarding-https"
+  ip_address            = google_compute_global_address.llm_lb_ip.address
+  port_range            = "443"
+  target                = google_compute_target_https_proxy.llm_https_proxy.id
+  load_balancing_scheme = "EXTERNAL"
+}
+
+resource "google_compute_url_map" "llm_redirect" {
+  name = "llm-http-redirect"
+
+  default_url_redirect {
+    https_redirect = true
+    strip_query    = false
+  }
+}
+
+resource "google_compute_target_http_proxy" "llm_http_proxy" {
+  name    = "llm-http-redirect-proxy"
+  url_map = google_compute_url_map.llm_redirect.id
+}
+
+resource "google_compute_global_forwarding_rule" "llm_http" {
   name                  = "llm-forwarding-http"
-  region                = var.region
-  ip_address            = google_compute_address.llm_lb_ip.address
+  ip_address            = google_compute_global_address.llm_lb_ip.address
   port_range            = "80"
-  target                = google_compute_region_target_http_proxy.llm_proxy.id
-  load_balancing_scheme = "EXTERNAL_MANAGED"
-  network               = google_compute_network.k8s_vpc.id
-
-  depends_on = [google_compute_subnetwork.proxy_only]
+  target                = google_compute_target_http_proxy.llm_http_proxy.id
+  load_balancing_scheme = "EXTERNAL"
 }
