@@ -8,14 +8,9 @@ output "control_plane_internal_ip" {
   value       = google_compute_instance.control_plane.network_interface[0].network_ip
 }
 
-output "worker_external_ips" {
-  description = "External IPs of the worker nodes"
-  value       = [for w in google_compute_instance.worker : w.network_interface[0].access_config[0].nat_ip]
-}
-
-output "worker_internal_ips" {
-  description = "Internal IPs of the worker nodes"
-  value       = [for w in google_compute_instance.worker : w.network_interface[0].network_ip]
+output "worker_instance_group" {
+  description = "Worker managed instance group"
+  value       = google_compute_instance_group_manager.workers.instance_group
 }
 
 output "ssh_control_plane" {
@@ -24,8 +19,8 @@ output "ssh_control_plane" {
 }
 
 output "ssh_workers" {
-  description = "SSH commands for the worker nodes"
-  value       = [for i in range(2) : "gcloud compute ssh k8s-worker-${i + 1} --zone ${var.zone}"]
+  description = "SSH into a worker node"
+  value       = "gcloud compute instance-groups managed list-instances k8s-workers --zone ${var.zone}"
 }
 
 output "llm_lb_ip" {
