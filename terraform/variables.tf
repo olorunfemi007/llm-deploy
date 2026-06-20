@@ -36,3 +36,8 @@ variable "state_bucket" {
   description = "GCS bucket name for Terraform remote state"
   type        = string
 }
+
+variable "domain" {
+  description = "Domain name for the LLM service (e.g. llm.example.com)"
+  type        = string
+}

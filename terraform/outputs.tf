@@ -30,12 +30,17 @@ output "ssh_workers" {
 
 output "llm_lb_ip" {
   description = "Static IP of the LLM load balancer"
-  value       = google_compute_address.llm_lb_ip.address
+  value       = google_compute_global_address.llm_lb_ip.address
 }
 
 output "llm_endpoint" {
   description = "LLM API endpoint URL"
-  value       = "http://${google_compute_address.llm_lb_ip.address}/health"
+  value       = "https://${var.domain}"
+}
+
+output "dns_record" {
+  description = "DNS A record to create for your domain"
+  value       = "${var.domain} → ${google_compute_global_address.llm_lb_ip.address}"
 }
 
 output "post_deploy_instructions" {
