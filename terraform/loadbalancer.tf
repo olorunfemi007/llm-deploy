@@ -62,4 +62,6 @@ resource "google_compute_forwarding_rule" "llm_http" {
   target                = google_compute_region_target_http_proxy.llm_proxy.id
   load_balancing_scheme = "EXTERNAL_MANAGED"
   network_tier          = "STANDARD"
+
+  depends_on = [google_compute_subnetwork.proxy_only]
 }
