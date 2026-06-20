@@ -65,6 +65,6 @@ resource "google_compute_firewall" "k8s_allow_nodeport" {
       ports    = ["30552", "30537"]
     }
 
-    source_ranges = ["0.0.0.0/0"]
+    source_ranges = ["35.191.0.0/16", "209.85.152.0/22", "209.85.204.0/22"]
     target_tags   = ["k8s-node"]
   }

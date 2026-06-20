@@ -28,6 +28,16 @@ output "ssh_workers" {
   value       = [for i in range(2) : "gcloud compute ssh k8s-worker-${i + 1} --zone ${var.zone}"]
 }
 
+output "llm_lb_ip" {
+  description = "Static IP of the LLM load balancer"
+  value       = google_compute_address.llm_lb_ip.address
+}
+
+output "llm_endpoint" {
+  description = "LLM API endpoint URL"
+  value       = "http://${google_compute_address.llm_lb_ip.address}/health"
+}
+
 output "post_deploy_instructions" {
   description = "Steps to complete the cluster setup"
   value       = <<-EOT
