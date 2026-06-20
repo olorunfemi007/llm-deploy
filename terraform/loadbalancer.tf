@@ -2,19 +2,6 @@ resource "google_compute_global_address" "llm_lb_ip" {
   name = "llm-lb-ip"
 }
 
-resource "google_compute_instance_group" "llm_workers" {
-  name    = "llm-worker-group"
-  zone    = var.zone
-  network = google_compute_network.k8s_vpc.id
-
-  instances = [for w in google_compute_instance.worker : w.self_link]
-
-  named_port {
-    name = "http"
-    port = 30552
-  }
-}
-
 resource "google_compute_health_check" "llm_health" {
   name               = "llm-health-check"
   check_interval_sec = 10
@@ -34,7 +21,7 @@ resource "google_compute_backend_service" "llm_backend" {
   health_checks         = [google_compute_health_check.llm_health.id]
 
   backend {
-    group           = google_compute_instance_group.llm_workers.self_link
+    group           = google_compute_instance_group_manager.workers.instance_group
     balancing_mode  = "UTILIZATION"
     capacity_scaler = 1.0
   }
