@@ -124,10 +124,8 @@ resource "google_compute_autoscaler" "workers" {
     max_replicas    = 5
     cooldown_period = 120
 
-    metric {
-      name   = "compute.googleapis.com/instance/memory/utilization"
-      target = 0.5
-      type   = "GAUGE"
+    cpu_utilization {
+      target = 0.4
     }
   }
 }
