@@ -5,11 +5,13 @@ on:
     branches: [main]
     paths:
       - terraform/**
+      - Dockerfile.rpc
       - .github/workflows/terraform.yml
   pull_request:
     branches: [main]
     paths:
       - terraform/**
+      - Dockerfile.rpc
       - .github/workflows/terraform.yml
   workflow_dispatch:
     inputs:
@@ -140,6 +142,36 @@ jobs:
             -var="service_account_email=llm-deploy-sa@llm-deploy-499913.iam.gserviceaccount.com" \
             -var="domain=${{ secrets.DOMAIN }}" \
             -var="enable_tls=${{ secrets.ENABLE_TLS || 'false' }}"
+
+  build-rpc-image:
+    name: Build & Push RPC Image
+    runs-on: ubuntu-latest
+    needs: terraform-apply
+    if: |
+      (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: llm-deploy-sa@llm-deploy-499913.iam.gserviceaccount.com
+
+      - name: Configure Docker auth
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+
+      - name: Build and Push RPC Image
+        run: |
+          docker build -f Dockerfile.rpc \
+            -t us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/llm-images/llama-rpc-server:latest \
+            -t us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/llm-images/llama-rpc-server:${{ github.sha }} \
+            .
+          docker push us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/llm-images/llama-rpc-server:latest
+          docker push us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/llm-images/llama-rpc-server:${{ github.sha }}
 
   terraform-destroy:
     name: Terraform Destroy
