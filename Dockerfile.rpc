@@ -20,5 +20,5 @@ FROM ubuntu:24.04
 
 COPY --from=build /llama.cpp/build/bin/ /app/
 
-ENTRYPOINT ["/app/llama-rpc-server"]
+ENTRYPOINT ["/app/rpc-server"]
 CMD ["--host", "0.0.0.0", "--port", "50052"]
