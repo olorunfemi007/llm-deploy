@@ -103,7 +103,7 @@ resource "google_compute_instance_group_manager" "workers" {
 
   named_port {
     name = "http"
-    port = 31508
+    port = 30666
   }
 
   update_policy {
