@@ -11,14 +11,19 @@ WORKDIR /llama.cpp
 RUN cmake -B build \
     -DGGML_RPC=ON \
     -DLLAMA_CURL=OFF \
+    -DBUILD_SHARED_LIBS=OFF \
     -DCMAKE_BUILD_TYPE=Release \
-    && cmake --build build -j$(nproc)
-
-RUN find build/bin -type f | head -20
+    && cmake --build build --target rpc-server -j$(nproc)
 
 FROM ubuntu:24.04
 
-COPY --from=build /llama.cpp/build/bin/ /app/
+RUN apt-get update && apt-get install -y \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=build /llama.cpp/build/bin/rpc-server /app/rpc-server
+
+ENV LD_LIBRARY_PATH=/app
 
 ENTRYPOINT ["/app/rpc-server"]
 CMD ["--host", "0.0.0.0", "--port", "50052"]
