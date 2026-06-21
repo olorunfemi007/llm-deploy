@@ -125,7 +125,7 @@ resource "google_compute_autoscaler" "workers" {
     cooldown_period = 120
 
     cpu_utilization {
-      target = 0.4
+      target = 0.8
     }
   }
 }
