@@ -40,13 +40,6 @@ mkdir -p /etc/containerd
 containerd config default | tee /etc/containerd/config.toml > /dev/null
 sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
 
-curl -fsSL https://github.com/GoogleCloudPlatform/docker-credential-gcr/releases/download/v2.1.22/docker-credential-gcr_linux_amd64-2.1.22.tar.gz | tar xz -C /usr/local/bin/
-cat >> /etc/containerd/config.toml << 'CREDEOF'
-
-[plugins."io.containerd.grpc.v1.cri".registry.configs."us-central1-docker.pkg.dev".auth]
-  username = "_dcgcr"
-  password_command = "/usr/local/bin/docker-credential-gcr get"
-CREDEOF
 
 systemctl restart containerd
 systemctl enable containerd
