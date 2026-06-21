@@ -1,7 +1,7 @@
 FROM ubuntu:24.04 AS build
 
 RUN apt-get update && apt-get install -y \
-    build-essential cmake git \
+    build-essential cmake git libcurl4-openssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
 RUN git clone https://github.com/ggml-org/llama.cpp.git /llama.cpp
@@ -10,20 +10,23 @@ WORKDIR /llama.cpp
 
 RUN cmake -B build \
     -DGGML_RPC=ON \
-    -DLLAMA_CURL=OFF \
+    -DLLAMA_CURL=ON \
     -DBUILD_SHARED_LIBS=OFF \
     -DCMAKE_BUILD_TYPE=Release \
-    && cmake --build build --target rpc-server -j$(nproc)
+    && cmake --build build -j$(nproc)
+
+RUN find /llama.cpp/build -name "llama-server" -type f && \
+    find /llama.cpp/build -name "rpc-server" -type f
 
 FROM ubuntu:24.04
 
 RUN apt-get update && apt-get install -y \
-    libgomp1 \
+    libgomp1 libcurl4 \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=build /llama.cpp/build/bin/rpc-server /app/rpc-server
+COPY --from=build /llama.cpp/build/bin/ /app/
 
 ENV LD_LIBRARY_PATH=/app
+ENV LLAMA_ARG_HOST=0.0.0.0
 
-ENTRYPOINT ["/app/rpc-server"]
-CMD ["--host", "0.0.0.0", "--port", "50052"]
+ENTRYPOINT ["/app/llama-server"]
