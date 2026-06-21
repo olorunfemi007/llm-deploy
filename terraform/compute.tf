@@ -121,7 +121,7 @@ resource "google_compute_autoscaler" "workers" {
 
   autoscaling_policy {
     min_replicas    = 4
-    max_replicas    = 5
+    max_replicas    = 4
     cooldown_period = 120
 
     cpu_utilization {
