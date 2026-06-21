@@ -13,7 +13,10 @@ RUN cmake -B build \
     -DLLAMA_CURL=ON \
     -DBUILD_SHARED_LIBS=OFF \
     -DCMAKE_BUILD_TYPE=Release \
-    && cmake --build build --target llama-server --target rpc-server -j$(nproc)
+    && cmake --build build -j$(nproc)
+
+RUN find /llama.cpp/build -name "llama-server" -type f && \
+    find /llama.cpp/build -name "rpc-server" -type f
 
 FROM ubuntu:24.04
 
@@ -21,8 +24,7 @@ RUN apt-get update && apt-get install -y \
     libgomp1 libcurl4 \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=build /llama.cpp/build/bin/llama-server /app/llama-server
-COPY --from=build /llama.cpp/build/bin/rpc-server /app/rpc-server
+COPY --from=build /llama.cpp/build/bin/ /app/
 
 ENV LD_LIBRARY_PATH=/app
 ENV LLAMA_ARG_HOST=0.0.0.0
