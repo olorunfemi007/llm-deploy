@@ -80,24 +80,48 @@ jobs:
             -var="domain=${{ secrets.DOMAIN }}" \
             -var="enable_tls=${{ secrets.ENABLE_TLS || 'false' }}" \
             -no-color \
-            -out=tfplan
+            -out=tfplan 2>&1 | tee /tmp/plan_output.txt
         continue-on-error: true
 
       - name: Post Plan to PR
         uses: actions/github-script@v7
         if: github.event_name == 'pull_request'
         env:
-          PLAN_OUTPUT: ${{ steps.plan.outputs.stdout }}
           PLAN_OUTCOME: ${{ steps.plan.outcome }}
         with:
           script: |
-            const output = `#### Terraform Plan\n\`\`\`\n${process.env.PLAN_OUTPUT}\n\`\`\`\n*Plan: \`${process.env.PLAN_OUTCOME}\`*`;
-            github.rest.issues.createComment({
+            const fs = require('fs');
+            let planOutput = '';
+            try {
+              planOutput = fs.readFileSync('/tmp/plan_output.txt', 'utf8');
+            } catch (e) {
+              planOutput = 'Plan output not available';
+            }
+            if (planOutput.length > 60000) {
+              planOutput = planOutput.substring(0, 60000) + '\n... (truncated)';
+            }
+            const output = `#### Terraform Plan \`${process.env.PLAN_OUTCOME}\`\n<details><summary>Show Plan</summary>\n\n\`\`\`\n${planOutput}\n\`\`\`\n</details>`;
+            const { data: comments } = await github.rest.issues.listComments({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: output
             });
+            const existing = comments.find(c => c.body.includes('#### Terraform Plan'));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                comment_id: existing.id,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output,
+              });
+            }
 
       - name: Plan Status
         if: steps.plan.outcome == 'failure'
