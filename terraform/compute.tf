@@ -120,12 +120,12 @@ resource "google_compute_autoscaler" "workers" {
   target = google_compute_instance_group_manager.workers.id
 
   autoscaling_policy {
-    min_replicas    = 2
+    min_replicas    = 4
     max_replicas    = 5
     cooldown_period = 120
 
     cpu_utilization {
-      target = 0.4
+      target = 0.8
     }
   }
 }
