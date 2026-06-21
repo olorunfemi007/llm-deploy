@@ -26,8 +26,18 @@ chown root:root /root/.kube/config
 
 kubectl --kubeconfig=/root/.kube/config apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
 
-JOIN_CMD=$(kubeadm token create --print-join-command)
+JOIN_CMD=$(kubeadm token create --ttl 0 --print-join-command)
 echo "$JOIN_CMD" > /root/kubeadm-join-command.sh
 chmod 600 /root/kubeadm-join-command.sh
 
 gsutil cp /root/kubeadm-join-command.sh gs://${state_bucket}/k8s/join-command.sh
+
+cat <<'CRON' > /usr/local/bin/refresh-join-token.sh
+#!/bin/bash
+JOIN_CMD=$(kubeadm token create --ttl 24h --print-join-command)
+echo "$JOIN_CMD" > /root/kubeadm-join-command.sh
+gsutil cp /root/kubeadm-join-command.sh gs://${state_bucket}/k8s/join-command.sh
+CRON
+chmod +x /usr/local/bin/refresh-join-token.sh
+
+echo "0 */12 * * * root /usr/local/bin/refresh-join-token.sh" > /etc/cron.d/k8s-token-refresh

@@ -126,7 +126,7 @@ resource "google_compute_autoscaler" "workers" {
 
     metric {
       name   = "compute.googleapis.com/instance/memory/utilization"
-      target = 0.7
+      target = 0.5
       type   = "GAUGE"
     }
   }
