@@ -1,6 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
+kubeadm reset -f 2>/dev/null || true
+rm -rf /etc/kubernetes/pki
+
 echo "Waiting for join command from control-plane..."
 
 for i in $(seq 1 60); do

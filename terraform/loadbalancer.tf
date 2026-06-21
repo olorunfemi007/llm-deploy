@@ -8,7 +8,7 @@ resource "google_compute_health_check" "llm_health" {
   timeout_sec        = 5
 
   http_health_check {
-    port         = 30552
+    port         = 31508
     request_path = "/health"
   }
 }
