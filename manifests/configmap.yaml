@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: llama-server-config
+  namespace: llm-inference
+  labels:
+    app.kubernetes.io/name: llama-server
+    app.kubernetes.io/part-of: llm-stack
+data:
+  LLAMA_ARG_MODEL: "/models/qwen2.5-coder-3b-instruct-q4_k_m.gguf"
+  LLAMA_ARG_CTX_SIZE: "2048"
+  LLAMA_ARG_THREADS: "2"
+  LLAMA_ARG_THREADS_BATCH: "2"
+  LLAMA_ARG_N_PARALLEL: "2"
+  LLAMA_ARG_N_PREDICT: "512"
+  LLAMA_ARG_HOST: "0.0.0.0"
+  LLAMA_ARG_PORT: "8080"
+  LLAMA_ARG_BATCH_SIZE: "256"
+  LLAMA_ARG_UBATCH_SIZE: "128"
+  LLAMA_ARG_RPC: "llama-rpc-worker-0.llama-rpc.llm-inference.svc.cluster.local:50052,llama-rpc-worker-1.llama-rpc.llm-inference.svc.cluster.local:50052,llama-rpc-worker-2.llama-rpc.llm-inference.svc.cluster.local:50052"

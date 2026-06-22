@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: llama-rpc-worker
+  namespace: llm-inference
+  labels:
+    app.kubernetes.io/name: llama-rpc-worker
+    app.kubernetes.io/part-of: llm-stack
+spec:
+  serviceName: llama-rpc
+  replicas: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: llama-rpc-worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: llama-rpc-worker
+        app.kubernetes.io/part-of: llm-stack
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: llama-server
+              topologyKey: kubernetes.io/hostname
+            - labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: llama-rpc-worker
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - name: rpc-worker
+          image: us-central1-docker.pkg.dev/llm-deploy-499913/llm-images/llama-rpc-server:latest
+          imagePullPolicy: Always
+          command: ["/app/rpc-server"]
+          args: ["--host", "0.0.0.0", "--port", "50052"]
+          ports:
+            - containerPort: 50052
+              name: rpc
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 1024Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: llama-rpc
+  namespace: llm-inference
+  labels:
+    app.kubernetes.io/name: llama-rpc-worker
+    app.kubernetes.io/part-of: llm-stack
+spec:
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: llama-rpc-worker
+  ports:
+    - port: 50052
+      targetPort: rpc
+      protocol: TCP
+      name: rpc
