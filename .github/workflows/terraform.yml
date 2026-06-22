@@ -227,25 +227,25 @@ jobs:
             --zone=us-central1-a --quiet
 
           gcloud compute ssh k8s-control-plane --zone=us-central1-a --quiet --command="
-            kubectl apply -f /tmp/manifests/namespace.yaml
-            kubectl apply -f /tmp/manifests/nfs-pv.yaml
-            kubectl apply -f /tmp/manifests/nfs-pvc.yaml
-            kubectl apply -f /tmp/manifests/configmap.yaml
-            kubectl apply -f /tmp/manifests/rpc-worker.yaml
-            kubectl apply -f /tmp/manifests/deployment.yaml
-            kubectl apply -f /tmp/manifests/service.yaml
-            kubectl apply -f /tmp/manifests/ingress.yaml
+            sudo kubectl apply -f /tmp/manifests/namespace.yaml
+            sudo kubectl apply -f /tmp/manifests/nfs-pv.yaml
+            sudo kubectl apply -f /tmp/manifests/nfs-pvc.yaml
+            sudo kubectl apply -f /tmp/manifests/configmap.yaml
+            sudo kubectl apply -f /tmp/manifests/rpc-worker.yaml
+            sudo kubectl apply -f /tmp/manifests/deployment.yaml
+            sudo kubectl apply -f /tmp/manifests/service.yaml
+            sudo kubectl apply -f /tmp/manifests/ingress.yaml
             rm -rf /tmp/manifests
           "
 
       - name: Verify deployment
         run: |
           gcloud compute ssh k8s-control-plane --zone=us-central1-a --quiet --command="
-            kubectl rollout restart statefulset/llama-rpc-worker -n llm-inference
-            kubectl rollout restart deploy/llama-server -n llm-inference
-            kubectl rollout status statefulset/llama-rpc-worker -n llm-inference --timeout=120s
-            kubectl rollout status deploy/llama-server -n llm-inference --timeout=300s
-            kubectl get pods -n llm-inference -o wide
+            sudo kubectl rollout restart statefulset/llama-rpc-worker -n llm-inference
+            sudo kubectl rollout restart deploy/llama-server -n llm-inference
+            sudo kubectl rollout status statefulset/llama-rpc-worker -n llm-inference --timeout=120s
+            sudo kubectl rollout status deploy/llama-server -n llm-inference --timeout=300s
+            sudo kubectl get pods -n llm-inference -o wide
           "
 
   terraform-destroy:
