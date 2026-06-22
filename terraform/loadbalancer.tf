@@ -19,6 +19,7 @@ resource "google_compute_backend_service" "llm_backend" {
   port_name             = "http"
   load_balancing_scheme = "EXTERNAL"
   health_checks         = [google_compute_health_check.llm_health.id]
+  timeout_sec           = 300
 
   backend {
     group           = google_compute_instance_group_manager.workers.instance_group
