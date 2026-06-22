@@ -5,12 +5,14 @@ on:
     branches: [main]
     paths:
       - terraform/**
+      - manifests/**
       - Dockerfile.rpc
       - .github/workflows/terraform.yml
   pull_request:
     branches: [main]
     paths:
       - terraform/**
+      - manifests/**
       - Dockerfile.rpc
       - .github/workflows/terraform.yml
   workflow_dispatch:
@@ -196,6 +198,55 @@ jobs:
             .
           docker push us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/llm-images/llama-rpc-server:latest
           docker push us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/llm-images/llama-rpc-server:${{ github.sha }}
+
+  deploy-manifests:
+    name: Deploy K8s Manifests
+    runs-on: ubuntu-latest
+    needs: build-rpc-image
+    if: |
+      (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: llm-deploy-sa@llm-deploy-499913.iam.gserviceaccount.com
+
+      - name: Setup Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy manifests via control plane
+        run: |
+          gcloud compute scp --recurse manifests/ \
+            k8s-control-plane:/tmp/manifests \
+            --zone=us-central1-a --quiet
+
+          gcloud compute ssh k8s-control-plane --zone=us-central1-a --quiet --command="
+            kubectl apply -f /tmp/manifests/namespace.yaml
+            kubectl apply -f /tmp/manifests/nfs-pv.yaml
+            kubectl apply -f /tmp/manifests/nfs-pvc.yaml
+            kubectl apply -f /tmp/manifests/configmap.yaml
+            kubectl apply -f /tmp/manifests/rpc-worker.yaml
+            kubectl apply -f /tmp/manifests/deployment.yaml
+            kubectl apply -f /tmp/manifests/service.yaml
+            kubectl apply -f /tmp/manifests/ingress.yaml
+            rm -rf /tmp/manifests
+          "
+
+      - name: Verify deployment
+        run: |
+          gcloud compute ssh k8s-control-plane --zone=us-central1-a --quiet --command="
+            kubectl rollout restart statefulset/llama-rpc-worker -n llm-inference
+            kubectl rollout restart deploy/llama-server -n llm-inference
+            kubectl rollout status statefulset/llama-rpc-worker -n llm-inference --timeout=120s
+            kubectl rollout status deploy/llama-server -n llm-inference --timeout=300s
+            kubectl get pods -n llm-inference -o wide
+          "
 
   terraform-destroy:
     name: Terraform Destroy

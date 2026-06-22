@@ -1,0 +1,116 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llama-server
+  namespace: llm-inference
+  labels:
+    app.kubernetes.io/name: llama-server
+    app.kubernetes.io/part-of: llm-stack
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: llama-server
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: llama-server
+        app.kubernetes.io/part-of: llm-stack
+    spec:
+      initContainers:
+        - name: wait-for-rpc
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              for worker in llama-rpc-worker-0 llama-rpc-worker-1 llama-rpc-worker-2; do
+                HOST="${worker}.llama-rpc.llm-inference.svc.cluster.local"
+                echo "Waiting for ${worker}..."
+                until wget -q --spider --timeout=2 "http://${HOST}:50052" 2>/dev/null || [ $? -eq 1 ]; do
+                  sleep 2
+                done
+                echo "${worker} is ready"
+              done
+              echo "All RPC workers ready"
+        - name: model-downloader
+          image: curlimages/curl:8.13.0
+          securityContext:
+            runAsUser: 0
+          command:
+            - sh
+            - -c
+            - |
+              MODEL_PATH="/models/qwen2.5-coder-3b-instruct-q4_k_m.gguf"
+              if [ -f "$MODEL_PATH" ]; then
+                echo "Model already exists at $MODEL_PATH, skipping download."
+                ls -lh "$MODEL_PATH"
+              else
+                echo "Downloading model to $MODEL_PATH ..."
+                curl -L --fail --retry 3 --retry-delay 5 -o "$MODEL_PATH" \
+                  "https://huggingface.co/Qwen/Qwen2.5-Coder-3B-Instruct-GGUF/resolve/main/qwen2.5-coder-3b-instruct-q4_k_m.gguf"
+                echo "Download complete."
+                ls -lh "$MODEL_PATH"
+              fi
+          volumeMounts:
+            - name: model-storage
+              mountPath: /models
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 128Mi
+      containers:
+        - name: llama-server
+          image: us-central1-docker.pkg.dev/llm-deploy-499913/llm-images/llama-rpc-server:latest
+          imagePullPolicy: Always
+          command: ["/app/llama-server"]
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: llama-server-config
+          volumeMounts:
+            - name: model-storage
+              mountPath: /models
+              readOnly: true
+          resources:
+            requests:
+              cpu: "1"
+              memory: 800Mi
+            limits:
+              cpu: "2"
+              memory: 1500Mi
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 30
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 15
+            failureThreshold: 3
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 30
+            failureThreshold: 3
+            timeoutSeconds: 5
+      volumes:
+        - name: model-storage
+          persistentVolumeClaim:
+            claimName: llm-models-pvc
+      terminationGracePeriodSeconds: 30
