@@ -22,6 +22,11 @@ resource "google_project_service" "secret_manager" {
   disable_on_destroy = false
 }
 
+resource "google_project_service" "iap" {
+  service            = "iap.googleapis.com"
+  disable_on_destroy = false
+}
+
 resource "google_project_service" "artifact_registry" {
   service            = "artifactregistry.googleapis.com"
   disable_on_destroy = false

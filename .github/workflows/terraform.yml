@@ -224,9 +224,9 @@ jobs:
         run: |
           gcloud compute scp --recurse manifests/ \
             k8s-control-plane:/tmp/manifests \
-            --zone=us-central1-a --quiet
+            --zone=us-central1-a --tunnel-through-iap --quiet
 
-          gcloud compute ssh k8s-control-plane --zone=us-central1-a --quiet --command="
+          gcloud compute ssh k8s-control-plane --zone=us-central1-a --tunnel-through-iap --quiet --command="
             sudo kubectl apply -f /tmp/manifests/namespace.yaml
             sudo kubectl apply -f /tmp/manifests/nfs-pv.yaml
             sudo kubectl apply -f /tmp/manifests/nfs-pvc.yaml
@@ -240,7 +240,7 @@ jobs:
 
       - name: Verify deployment
         run: |
-          gcloud compute ssh k8s-control-plane --zone=us-central1-a --quiet --command="
+          gcloud compute ssh k8s-control-plane --zone=us-central1-a --tunnel-through-iap --quiet --command="
             sudo kubectl rollout restart statefulset/llama-rpc-worker -n llm-inference
             sudo kubectl rollout restart deploy/llama-server -n llm-inference
             sudo kubectl rollout status statefulset/llama-rpc-worker -n llm-inference --timeout=120s
