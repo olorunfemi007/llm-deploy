@@ -18,6 +18,7 @@ spec:
         app.kubernetes.io/name: llama-rpc-worker
         app.kubernetes.io/part-of: llm-stack
     spec:
+      serviceAccountName: llama-rpc-worker
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
