@@ -43,7 +43,7 @@ resource "google_compute_instance" "control_plane" {
 
   service_account {
     email  = var.service_account_email
-    scopes = ["cloud-platform"]
+    scopes = ["storage-full", "logging-write", "monitoring-write"]
   }
 
   allow_stopping_for_update = true
@@ -84,7 +84,7 @@ resource "google_compute_instance_template" "worker" {
 
   service_account {
     email  = var.service_account_email
-    scopes = ["cloud-platform"]
+    scopes = ["storage-ro", "logging-write", "monitoring-write"]
   }
 
   lifecycle {

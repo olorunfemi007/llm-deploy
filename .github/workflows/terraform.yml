@@ -32,7 +32,7 @@ on:
 
 env:
   TF_WORKING_DIR: terraform
-  GCP_PROJECT_ID: llm-deploy-499913
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
 
 permissions:
@@ -58,7 +58,7 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: llm-deploy-sa@llm-deploy-499913.iam.gserviceaccount.com
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       - name: Terraform Init
         working-directory: ${{ env.TF_WORKING_DIR }}
@@ -78,7 +78,7 @@ jobs:
           terraform plan \
             -var="project_id=${{ env.GCP_PROJECT_ID }}" \
             -var="state_bucket=${{ env.TF_STATE_BUCKET }}" \
-            -var="service_account_email=llm-deploy-sa@llm-deploy-499913.iam.gserviceaccount.com" \
+            -var="service_account_email=${{ secrets.GCP_SERVICE_ACCOUNT }}" \
             -var="domain=${{ secrets.DOMAIN }}" \
             -var="enable_tls=${{ secrets.ENABLE_TLS || 'false' }}" \
             -no-color \
@@ -150,7 +150,7 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: llm-deploy-sa@llm-deploy-499913.iam.gserviceaccount.com
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       - name: Terraform Init
         working-directory: ${{ env.TF_WORKING_DIR }}
@@ -165,7 +165,7 @@ jobs:
           terraform apply -auto-approve \
             -var="project_id=${{ env.GCP_PROJECT_ID }}" \
             -var="state_bucket=${{ env.TF_STATE_BUCKET }}" \
-            -var="service_account_email=llm-deploy-sa@llm-deploy-499913.iam.gserviceaccount.com" \
+            -var="service_account_email=${{ secrets.GCP_SERVICE_ACCOUNT }}" \
             -var="domain=${{ secrets.DOMAIN }}" \
             -var="enable_tls=${{ secrets.ENABLE_TLS || 'false' }}"
 
@@ -185,7 +185,7 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: llm-deploy-sa@llm-deploy-499913.iam.gserviceaccount.com
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       - name: Configure Docker auth
         run: gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
@@ -215,7 +215,7 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: llm-deploy-sa@llm-deploy-499913.iam.gserviceaccount.com
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       - name: Setup Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
@@ -267,7 +267,7 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: llm-deploy-sa@llm-deploy-499913.iam.gserviceaccount.com
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       - name: Terraform Init
         working-directory: ${{ env.TF_WORKING_DIR }}
@@ -282,7 +282,7 @@ jobs:
           terraform destroy -auto-approve \
             -var="project_id=${{ env.GCP_PROJECT_ID }}" \
             -var="state_bucket=${{ env.TF_STATE_BUCKET }}" \
-            -var="service_account_email=llm-deploy-sa@llm-deploy-499913.iam.gserviceaccount.com" \
+            -var="service_account_email=${{ secrets.GCP_SERVICE_ACCOUNT }}" \
             -var="domain=${{ secrets.DOMAIN }}" \
             -var="enable_tls=${{ secrets.ENABLE_TLS || 'false' }}"
 
