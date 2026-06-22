@@ -39,7 +39,7 @@ resource "google_compute_firewall" "k8s_allow_ssh" {
     ports    = ["22"]
   }
 
-  source_ranges = ["0.0.0.0/0"]
+  source_ranges = ["35.235.240.0/20"]
   target_tags   = ["k8s-node"]
 }
 
@@ -52,7 +52,7 @@ resource "google_compute_firewall" "k8s_allow_api" {
     ports    = ["6443"]
   }
 
-  source_ranges = ["0.0.0.0/0"]
+  source_ranges = ["35.235.240.0/20"]
   target_tags   = ["k8s-control-plane"]
 }
 
