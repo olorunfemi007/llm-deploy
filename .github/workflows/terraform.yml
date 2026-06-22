@@ -228,6 +228,7 @@ jobs:
 
           gcloud compute ssh k8s-control-plane --zone=us-central1-a --tunnel-through-iap --quiet --command="
             sudo kubectl apply -f /tmp/manifests/namespace.yaml
+            sudo kubectl apply -f /tmp/manifests/serviceaccount.yaml
             sudo kubectl apply -f /tmp/manifests/nfs-pv.yaml
             sudo kubectl apply -f /tmp/manifests/nfs-pvc.yaml
             sudo kubectl apply -f /tmp/manifests/configmap.yaml
