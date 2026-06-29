@@ -8,7 +8,7 @@ metadata:
     app.kubernetes.io/part-of: llm-stack
 data:
   LLAMA_ARG_MODEL: "/models/qwen2.5-coder-3b-instruct-q4_k_m.gguf"
-  LLAMA_ARG_CTX_SIZE: "2048"
+  LLAMA_ARG_CTX_SIZE: "4096"
   LLAMA_ARG_THREADS: "2"
   LLAMA_ARG_THREADS_BATCH: "2"
   LLAMA_ARG_N_PARALLEL: "2"
